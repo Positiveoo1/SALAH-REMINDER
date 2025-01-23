@@ -10,6 +10,55 @@ document.addEventListener("DOMContentLoaded", async () => {
   const soundIntervals = {};
 
   const notificationSound = new Audio("sound/notification.mp3");
+  let notificationAllowed = false;
+
+  const requestNotificationPermission = async () => {
+    if ("Notification" in window) {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        notificationAllowed = true;
+      } else {
+        alert("Notifications are required for reminders to work.");
+      }
+    } else {
+      alert("Notifications are not supported on this browser.");
+    }
+  };
+
+  const showNotificationPermissionPrompt = () => {
+    const allowNotificationsDiv = document.createElement("div");
+    allowNotificationsDiv.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #fff;
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    `;
+    allowNotificationsDiv.innerHTML = `
+      <p style="margin: 0; font-size: 14px;">Do you allow notifications for Salah reminders?</p>
+      <button id="allow-notifications" style="margin: 10px 5px; padding: 5px 10px;">Allow</button>
+      <button id="deny-notifications" style="margin: 10px 5px; padding: 5px 10px;">Deny</button>
+    `;
+    document.body.appendChild(allowNotificationsDiv);
+
+    const allowButton = document.getElementById("allow-notifications");
+    const denyButton = document.getElementById("deny-notifications");
+
+    allowButton.addEventListener("click", async () => {
+      await requestNotificationPermission();
+      document.body.removeChild(allowNotificationsDiv);
+    });
+
+    denyButton.addEventListener("click", () => {
+      alert("You can enable notifications later in your browser settings.");
+      document.body.removeChild(allowNotificationsDiv);
+    });
+  };
 
   const fetchSalahTimes = async () => {
     const response = await fetch(
@@ -25,11 +74,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   setInterval(updateClock, 1000);
 
-  themeToggle.addEventListener("click", () => {
-    document.body.dataset.theme =
-      document.body.dataset.theme === "dark" ? "light" : "dark";
+  // Handle theme toggle
+  const applyTheme = (theme) => {
+    document.body.dataset.theme = theme;
     themeToggle.textContent =
-      document.body.dataset.theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+      theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+  };
+
+  // Load theme preference from localStorage
+  const savedTheme = localStorage.getItem("theme") || "light";
+  applyTheme(savedTheme);
+
+  themeToggle.addEventListener("click", () => {
+    const newTheme = document.body.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(newTheme);
+    localStorage.setItem("theme", newTheme); // Save to localStorage
   });
 
   const startSound = (salah) => {
@@ -92,11 +151,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       salahDate.setHours(hours, minutes, 0);
 
       const timeUntilSalah = salahDate - new Date();
-      if (timeUntilSalah > 0) {
+      if (timeUntilSalah > 0 && notificationAllowed) {
         setTimeout(() => {
-          notificationIntervals[salah] = setInterval(() => {
-            sendNotification(salah, time);
-          }, 60 * 1000);
+          const notification = new Notification(`${salah} Time!`, {
+            body: `It's time for ${salah} at ${time}.`,
+          });
+          notificationSound.play();
         }, timeUntilSalah);
       }
     });
@@ -122,7 +182,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const salahElement = document.createElement("div");
       salahElement.textContent = `${salah}: ${time}`;
       salahTimesDiv.appendChild(salahElement);
-    });loadingDiv.classList.add("hidden");
+    });
+    loadingDiv.classList.add("hidden");
     salahTimesDiv.classList.remove("hidden");
 
     scheduleReminders(Object.fromEntries(filteredTimings));
@@ -130,4 +191,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Error fetching Salah times:", error);
     loadingDiv.textContent = "Failed to load Salah times.";
   }
+
+  showNotificationPermissionPrompt();
 });
