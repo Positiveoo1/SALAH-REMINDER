@@ -80,8 +80,73 @@ document.addEventListener("DOMContentLoaded", async () => {
     themeToggle.textContent =
       theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
   };
+  
+  const calculateTimeRemaining = (salahTime) => {
+    const now = new Date();
+    const [hours, minutes] = salahTime.split(":").map(Number);
+    const salahDate = new Date(now);
+    salahDate.setHours(hours, minutes, 0);
 
-  // Load theme preference from localStorage
+    if (salahDate < now) {
+      salahDate.setDate(now.getDate() + 1); // Move to the next day
+    }
+
+    const diffMs = salahDate - now;
+    const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { hours: hoursLeft, minutes: minutesLeft };
+  };
+
+  const displaySalahTimes = (timings) => {
+    const now = new Date();
+
+    const sortedSalah = Object.entries(timings).sort(([_, timeA], [__, timeB]) => {
+      const [hoursA, minutesA] = timeA.split(":").map(Number);
+      const [hoursB, minutesB] = timeB.split(":").map(Number);
+
+      const timeAInMinutes = hoursA * 60 + minutesA;
+      const timeBInMinutes = hoursB * 60 + minutesB;
+
+      const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+
+      return (
+        (timeAInMinutes - nowInMinutes + 1440) % 1440 -
+        (timeBInMinutes - nowInMinutes + 1440) % 1440
+      );
+    });
+
+    const [nextSalah, nextTime] = sortedSalah[0]; 
+    salahTimesDiv.innerHTML = sortedSalah
+      .map(([salah, time]) => {
+        const isNext = salah === nextSalah;
+        const { hours, minutes } = calculateTimeRemaining(time);
+        return `
+          <div>
+            <strong>${salah}:</strong> ${time} ${
+          isNext ? `(<strong>${minutes} minutes</strong>)` : ""
+        }
+          </div>
+        `;
+      })
+      .join("");
+  };
+
+  const updateSalahCountdowns = (timings) => {
+    setInterval(() => {
+      Object.entries(timings).forEach(([salah, time]) => {
+        const { hours, minutes } = calculateTimeRemaining(time);
+        const salahRemainingElement = document.getElementById(`${salah}-remaining`);
+        if (salahRemainingElement) {
+          salahRemainingElement.textContent =
+            hours >= 0 && minutes >= 0
+              ? `Time left: ${hours} hours and ${minutes} minutes`
+              : "Time left: --";
+        }
+      });
+    }, 60000); // Update every 1 minute
+  };
+
   const savedTheme = localStorage.getItem("theme") || "light";
   applyTheme(savedTheme);
 
@@ -186,6 +251,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadingDiv.classList.add("hidden");
     salahTimesDiv.classList.remove("hidden");
 
+    displaySalahTimes(Object.fromEntries(filteredTimings));
+
+    updateSalahCountdowns(Object.fromEntries(filteredTimings)); // Add this line to start countdowns
     scheduleReminders(Object.fromEntries(filteredTimings));
   } catch (error) {
     console.error("Error fetching Salah times:", error);
