@@ -1,0 +1,89 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --primary-color: #007bff;
+  }
+  
+  [data-theme="dark"] {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --primary-color: #1e90ff;
+  }
+  
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  #clock {
+    font-size: 1.2rem;
+  }
+  
+  .toggle-btn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .toggle-btn:hover {
+    background-color: darken(var(--primary-color), 10%);
+  }
+  
+  main h1 {
+    margin-bottom: 20px;
+  }
+  
+  #loading {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  #salah-times div {
+    font-size: 1.2rem;
+    margin: 10px 0;
+  }
+  
+  @media (max-width: 768px) {
+    #clock {
+      font-size: 1rem;
+    }
+  
+    .toggle-btn {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+    }
+  
+    main h1 {
+      font-size: 1.5rem;
+    }
+  
+    #salah-times div {
+      font-size: 1rem;
+    }
+  }
+  
