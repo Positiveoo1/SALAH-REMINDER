@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const notificationIntervals = {};
   const soundIntervals = {};
 
-  const notificationSound = new Audio("sound/notification.mp3");
+  const notificationSound = new Audio("soundd.wav");
   let notificationAllowed = false;
 
   const requestNotificationPermission = async () => {
